@@ -6,12 +6,10 @@ pipeline {
         BRANCH     = 'main'
         WAR_NAME   = 'mywebapp.war'
 
-        // Tomcat credentials & server info
-        TOMCAT_USER = 'robot'
-        TOMCAT_PASS = 's3cret'
+        // Tomcat server info
+        TOMCAT_USER = 'tomcat'       // SSH user
         TOMCAT_HOST = 'ec2-54-82-16-119.compute-1.amazonaws.com'
-        TOMCAT_PORT = '8080'
-        DEPLOY_PATH = 'manager/text/deploy?path=/mywebapp&update=true'
+        TOMCAT_PATH = '/opt/apache-tomcat-9.0.109/webapps' // Tomcat webapps path
     }
 
     stages {
@@ -27,15 +25,26 @@ pipeline {
             }
         }
 
-        stage('Deploy to Tomcat') {
+        stage('Copy WAR to Tomcat') {
             steps {
                 script {
                     def warFile = "target/${WAR_NAME}"
+                    echo "🚀 Copying ${warFile} to Tomcat webapps folder..."
+                    
+                    // Use scp to copy WAR file directly
                     sh """
-                        echo "🚀 Deploying ${warFile} to Tomcat..."
-                        curl -v -u ${TOMCAT_USER}:${TOMCAT_PASS} \\
-                        --upload-file ${warFile} \\
-                        "http://${TOMCAT_HOST}:${TOMCAT_PORT}/${DEPLOY_PATH}"
+                        scp ${warFile} ${TOMCAT_USER}@${TOMCAT_HOST}:${TOMCAT_PATH}/
+                    """
+                }
+            }
+        }
+
+        stage('Restart Tomcat') {
+            steps {
+                script {
+                    echo "🔄 Restarting Tomcat to pick up new WAR..."
+                    sh """
+                        ssh ${TOMCAT_USER}@${TOMCAT_HOST} 'bash -c "cd /opt/apache-tomcat-9.0.109/bin && ./shutdown.sh && sleep 5 && ./startup.sh"'
                     """
                 }
             }
@@ -44,10 +53,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Deployment pipeline finished (check Tomcat response above).'
+            echo '✅ Deployment finished: WAR is now in Tomcat webapps folder.'
         }
         failure {
-            echo '❌ Deployment failed! Check curl/Tomcat Manager response in the logs.'
+            echo '❌ Deployment failed! Check SSH/Tomcat logs.'
         }
     }
 }
