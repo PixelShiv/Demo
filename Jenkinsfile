@@ -9,7 +9,7 @@ pipeline {
         // Tomcat credentials & server info
         TOMCAT_USER = 'robot'
         TOMCAT_PASS = 's3cret'
-        TOMCAT_HOST = 'http://ec2-54-82-16-119.compute-1.amazonaws.com'
+        TOMCAT_HOST = 'ec2-54-82-16-119.compute-1.amazonaws.com'
         TOMCAT_PORT = '8080'
         DEPLOY_PATH = 'manager/text/deploy?path=/mywebapp&update=true'
     }
@@ -50,3 +50,4 @@ pipeline {
         }
     }
 }
+
