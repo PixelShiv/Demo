@@ -32,7 +32,8 @@ pipeline {
                 script {
                     def warFile = "target/${WAR_NAME}"
                     sh """
-                        curl -u ${TOMCAT_USER}:${TOMCAT_PASS} \\
+                        echo "🚀 Deploying ${warFile} to Tomcat..."
+                        curl -v -u ${TOMCAT_USER}:${TOMCAT_PASS} \\
                         --upload-file ${warFile} \\
                         "http://${TOMCAT_HOST}:${TOMCAT_PORT}/${DEPLOY_PATH}"
                     """
@@ -43,11 +44,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Deployment successful!'
+            echo '✅ Deployment pipeline finished (check Tomcat response above).'
         }
         failure {
-            echo '❌ Deployment failed!'
+            echo '❌ Deployment failed! Check curl/Tomcat Manager response in the logs.'
         }
     }
 }
-
